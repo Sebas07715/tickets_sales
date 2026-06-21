@@ -175,7 +175,44 @@ function cambiarFiltro(nuevoFiltro) {
 }
 
 
-// TODO: agregar funcionalidad para exportar el historial de compras a CSV.
+// ─── Exportar historial a CSV ──────────────────────────────────────────────────
+function descargarHistorialCSV() {
+  if (compras.length === 0) {
+    mensajeError.textContent = 'No hay compras para exportar.';
+    mensajeExito.textContent = '';
+    return;
+  }
+
+  const escaparValorCsv = (valor) => {
+    const texto = String(valor).replaceAll('"', '""');
+    return `"${texto}"`;
+  };
+
+  const encabezados = ['Nombre', 'Tipo', 'Cantidad', 'Total'];
+  const filas = compras.map((compra) => [
+    escaparValorCsv(compra.nombre),
+    escaparValorCsv(compra.tipo),
+    escaparValorCsv(compra.cantidad),
+    escaparValorCsv(formatearPesos(compra.total)),
+  ]);
+
+  const contenidoCsv = [encabezados.join(','), ...filas.map((fila) => fila.join(','))].join('\r\n');
+  const blob = new Blob([contenidoCsv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const enlace = document.createElement('a');
+
+  enlace.setAttribute('href', url);
+  enlace.setAttribute('download', 'historial_compras.csv');
+  enlace.style.display = 'none';
+  document.body.appendChild(enlace);
+  enlace.click();
+  enlace.remove();
+  URL.revokeObjectURL(url);
+
+  mensajeExito.textContent = 'Historial exportado a CSV.';
+  mensajeError.textContent = '';
+}
+
 // ─── Binding de eventos ───────────────────────────────────────────────────────
 form.addEventListener('submit', registrarCompra);
 
@@ -189,6 +226,11 @@ document.getElementById('filterAll').addEventListener('click', () => {
 document.getElementById('filterVip').addEventListener('click', () => {
   cambiarFiltro('vip');
 });
+
+const exportCsvButton = document.getElementById('exportCsv');
+if (exportCsvButton) {
+  exportCsvButton.addEventListener('click', descargarHistorialCSV);
+}
 
 // ─── Inicialización ───────────────────────────────────────────────────────────
 actualizarContadores();
